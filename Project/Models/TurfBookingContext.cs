@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace TurfBooking.Models
 {
@@ -7,6 +8,7 @@ namespace TurfBooking.Models
         public DbSet<User> Users { get; set; }
         public DbSet<Turf> Turfs { get; set; }
         public DbSet<Booking> Bookings { get; set; }
+        public DbSet<Slot> Slots { get; set; }  
 
        
         public TurfBookingContext(DbContextOptions<TurfBookingContext> options):base(options) { }

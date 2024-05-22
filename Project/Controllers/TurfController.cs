@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿
+using Microsoft.AspNetCore.Mvc;
 using TurfBooking.Models;
 using TurfBooking.Services;
 using TurfBooking.DTO;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TurfBooking.Controllers
 {
@@ -16,59 +18,101 @@ namespace TurfBooking.Controllers
             _turfService = turfService;
         }
 
-        // GET: api/Turf
         [HttpGet]
         public ActionResult<IEnumerable<TurfDTO>> GetTurfs()
         {
-            var turfs = _turfService.GetTurfs();
-            if (turfs == null)
+            try
             {
-                return NotFound(); // Return a NotFoundResult if no users are found
+                var turfs = _turfService.GetTurfs();
+                if (turfs == null)
+                {
+                    return NotFound();
+                }
+                return Ok(turfs);
             }
-            return Ok(turfs);
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                return StatusCode(500, $"An error occurred while fetching turfs: {ex.Message}");
+            }
         }
 
-        // GET: api/Turf/5
         [HttpGet("{id}")]
         public ActionResult<TurfDTO> GetTurf(int id)
         {
-            var turf = _turfService.GetTurf(id);
-
-            if (turf == null)
+            try
             {
-                return NotFound();
+                var turf = _turfService.GetTurf(id);
+                if (turf == null)
+                {
+                    return NotFound();
+                }
+                return turf;
             }
-
-            return turf;
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                return StatusCode(500, $"An error occurred while fetching the turf with ID {id}: {ex.Message}");
+            }
         }
 
-        // POST: api/Turf
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public ActionResult<TurfDTO> PostTurf(NewTurfDTO turf)
         {
-            var createdTurf = _turfService.AddTurf(turf);
-            // Assuming AddTurf method now returns the created TurfDTO with an Id
-            return CreatedAtAction(nameof(GetTurf), new { id = createdTurf.Id }, createdTurf);
+            try
+            {
+                var createdTurf = _turfService.AddTurf(turf);
+                return CreatedAtAction(nameof(GetTurf), new { id = createdTurf.Id }, createdTurf);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                return StatusCode(500, $"An error occurred while creating a new turf: {ex.Message}");
+            }
         }
 
-
-        // PUT: api/Turf/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public IActionResult PutTurf(int id, UpdateAvailabilityDTO turf)
         {
-            
+            try
+            {
+                var existingTurf = _turfService.GetTurf(id);
+                if (existingTurf == null)
+                {
+                    return NotFound();
+                }
 
-            _turfService.UpdateTurf(id,turf);
-
-            return NoContent();
+                _turfService.UpdateTurf(id, turf);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                return StatusCode(500, $"An error occurred while updating the turf with ID {id}: {ex.Message}");
+            }
         }
 
-        // DELETE: api/Turf/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public IActionResult DeleteTurf(int id)
         {
-            _turfService.DeleteTurf(id);
-            return NoContent();
+            try
+            {
+                var existingTurf = _turfService.GetTurf(id);
+                if (existingTurf == null)
+                {
+                    return NotFound();
+                }
+                _turfService.DeleteTurf(id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                return StatusCode(500, $"An error occurred while deleting the turf with ID {id}: {ex.Message}");
+            }
         }
     }
 }

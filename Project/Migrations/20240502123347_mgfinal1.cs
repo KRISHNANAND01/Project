@@ -6,11 +6,24 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Project.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialOne : Migration
+    public partial class mgfinal1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "Slots",
+                columns: table => new
+                {
+                    SlotId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Time = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Slots", x => x.SlotId);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Turfs",
                 columns: table => new
@@ -49,8 +62,8 @@ namespace Project.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Duration = table.Column<int>(type: "int", nullable: false),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    SlotId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     TurfId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -87,6 +100,9 @@ namespace Project.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Bookings");
+
+            migrationBuilder.DropTable(
+                name: "Slots");
 
             migrationBuilder.DropTable(
                 name: "Turfs");

@@ -10,12 +10,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IUserService,UserService>();
 builder.Services.AddScoped<ITurfService, TurfService>();
+builder.Services.AddScoped<ISlotService, SlotService>();
 
 builder.Services.AddDbContext<TurfBookingContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
@@ -42,6 +42,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors(options => options.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

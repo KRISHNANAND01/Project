@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Project.DTO;
+using System.ComponentModel.DataAnnotations;
 using TurfBooking.Models;
 using TurfBooking.Services;
 
@@ -18,76 +21,143 @@ namespace TurfBooking.Controllers
 
         // GET: api/User
         [HttpGet]
-        [Authorize(Roles ="Admin")]
+        [Authorize(Roles = "Admin")]
         public ActionResult<IEnumerable<UserDTO>> GetUsers()
         {
-            var users = _userService.GetUsers();
-            if (users == null)
+            try
             {
-                return NotFound();
+                var users = _userService.GetUsers();
+                if (users == null)
+                {
+                    return NotFound();
+                }
+                return Ok(users);
             }
-            return Ok(users);
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                return StatusCode(500, $"An error occurred while fetching users: {ex.Message}");
+            }
         }
 
         // GET: api/User/5
         [HttpGet("{id}")]
         public ActionResult<UserDTO> GetUser(int id)
         {
-            var user = _userService.GetUser(id);
-            if (user == null)
+            try
             {
-                return NotFound();
+                var user = _userService.GetUser(id);
+                if (user == null)
+                {
+                    return NotFound();
+                }
+                return user;
             }
-            return user;
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                return StatusCode(500, $"An error occurred while fetching the user with ID {id}: {ex.Message}");
+            }
         }
 
         // POST: api/User
         [HttpPost]
         public ActionResult<UserDTO> PostUser(NewUserDTO newUserDto)
         {
-            var help= _userService.AddUser(newUserDto);
-            var createdUser = _userService.GetUser(help.Id);// Assuming the service returns the created user
-            return CreatedAtAction("GetUser", new { id = createdUser.Id }, createdUser);
+            /*try
+            {
+                var help = _userService.AddUser(newUserDto);
+                var createdUser = _userService.GetUser(help.Id); // Assuming the service returns the created user
+                return CreatedAtAction("GetUser", new { id = createdUser.Id }, createdUser);
+            }*/
+            try
+            {
+                var validationContext = new ValidationContext(newUserDto);
+                var validationResults = new List<ValidationResult>();
+                if (!Validator.TryValidateObject(newUserDto, validationContext, validationResults, true))
+                {
+                    // If validation fails, return a bad request with the validation errors
+                    var errors = validationResults.Select(result => result.ErrorMessage).ToList();
+                    return BadRequest(errors);
+                }
+
+                var createdUser = _userService.AddUser(newUserDto);
+                if (createdUser != null)
+                {
+                    return CreatedAtAction("GetUser", new { id = createdUser.Id }, createdUser);
+                }
+                return BadRequest("Already Exist");
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                return StatusCode(500, $"An error occurred while creating a new user: {ex.Message}");
+            }
         }
 
         // PUT: api/User/5
         [HttpPut("{id}")]
         public IActionResult PutUser(int id, UserDTO userDto)
         {
-            if (id != userDto.Id)
+            try
             {
-                return BadRequest();
+                if (id != userDto.Id)
+                {
+                    return BadRequest();
+                }
+                _userService.UpdateUser(id, userDto);
+                return NoContent();
             }
-
-            _userService.UpdateUser(id, userDto);
-            return NoContent();
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                return StatusCode(500, $"An error occurred while updating the user with ID {id}: {ex.Message}");
+            }
         }
 
         // DELETE: api/User/5
         [HttpDelete("{id}")]
         public IActionResult DeleteUser(int id)
         {
-            _userService.DeleteUser(id);
-            return NoContent();
-        }
-        [HttpPost("login")]
-
-        public string Login(string email, string password)
-
-        {
-
-            var result = _userService.Login(email, password);
-
-            if (result != null)
-
+            try
             {
-
-                return result;
-
+                _userService.DeleteUser(id);
+                return NoContent();
             }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                return StatusCode(500, $"An error occurred while deleting the user with ID {id}: {ex.Message}");
+            }
+        }
 
-            return null;
-
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] login request)
+        {
+            try
+            {
+                // Generate a bearer token. This is a placeholder. Use a secure method to generate tokens.
+                var token = _userService.Login(request);
+                //if (token == "Incorrect Credentials")
+                if (token.token == "1")
+                {
+                    // Throw an exception if token.Id is null
+                    return Unauthorized("Invalid Username or password or Token Id is null");
+                }
+                // Return the token as JSON
+                return Ok(token);
+            }
+            catch (NullReferenceException ex)
+            {
+                // Return an error response if the credentials are invalid or token.Id is null
+                // return Ok("Invalid Username or password or Token ID is null");
+                return Unauthorized("Invalid Username or password or Token ID is null");
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle other types of exceptions
+                return StatusCode(500, $"An error occurred during the login process: {ex.Message}");
+            }
         }
     }
 }

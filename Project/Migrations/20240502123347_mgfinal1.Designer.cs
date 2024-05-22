@@ -12,8 +12,8 @@ using TurfBooking.Models;
 namespace Project.Migrations
 {
     [DbContext(typeof(TurfBookingContext))]
-    [Migration("20240407193152_Initialuser")]
-    partial class Initialuser
+    [Migration("20240502123347_mgfinal1")]
+    partial class mgfinal1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -33,10 +33,10 @@ namespace Project.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("BookingDate")
+                    b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Duration")
+                    b.Property<int>("SlotId")
                         .HasColumnType("int");
 
                     b.Property<int>("TurfId")
@@ -52,6 +52,23 @@ namespace Project.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Bookings");
+                });
+
+            modelBuilder.Entity("TurfBooking.Models.Slot", b =>
+                {
+                    b.Property<int>("SlotId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SlotId"));
+
+                    b.Property<string>("Time")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("SlotId");
+
+                    b.ToTable("Slots");
                 });
 
             modelBuilder.Entity("TurfBooking.Models.Turf", b =>

@@ -1,3 +1,4 @@
+using Project.DTO;
 using System.Collections.Generic;
 using TurfBooking.Models;
 
@@ -10,6 +11,6 @@ namespace TurfBooking.Services
         UserDTO AddUser(NewUserDTO newUserDto);
         void UpdateUser(int id, UserDTO userDto);
         void DeleteUser(int id);
-        string Login(string email, string password);
+        JWTTokenResponse Login(login newlogin);
     }
 }

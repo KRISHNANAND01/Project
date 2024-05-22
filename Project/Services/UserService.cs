@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Project.DTO;
 
 namespace TurfBooking.Services
 {
@@ -33,46 +34,62 @@ namespace TurfBooking.Services
 
         public UserDTO AddUser(NewUserDTO newUserDto)
         {
-            var user = new User
+            var res = UserExist(newUserDto);
+            if (!res)
             {
-                Name = newUserDto.Name,
-                Email = newUserDto.Email,
-                Password =newUserDto.Password,
-                Phone = newUserDto.Phone,
-            };
+                var user = new User
+                {
+                    Name = newUserDto.Name,
+                    Email = newUserDto.Email,
+                    Password = newUserDto.Password,
+                    Phone = newUserDto.Phone,
+                };
 
-            _context.Users.Add(user);
-            _context.SaveChanges();
+                _context.Users.Add(user);
+                _context.SaveChanges();
 
-            var userDto = new UserDTO
-            {
-                Id = user.Id,
-                Name = newUserDto.Name,
-                Email = newUserDto.Email,
-                Phone = newUserDto.Phone
-                // Add other properties as necessary
-            };
+                /*var userDto = new UserDTO
+                {
+                    Id = user.Id,
+                    Name = newUserDto.Name,
+                    Email = newUserDto.Email,
+                    Phone = newUserDto.Phone
 
-            return userDto;
+                };*/
+                var userDto = MapToDTO(user);
+
+                return userDto;
+            }
+            return null;
         }
-        public string Login(string email, string password)
+       
+        public JWTTokenResponse Login(login newlogin)
         {
-            var userExist = _context.Users.FirstOrDefault(t => t.Email == email && EF.Functions.Collate(t.Password, "SQL_Latin1_General_CP1_CS_AS") == password);
+            var userExist = _context.Users.FirstOrDefault(t => t.Email == newlogin.Email && EF.Functions.Collate(t.Password, "SQL_Latin1_General_CP1_CS_AS") == newlogin.Password);
             if (userExist != null)
             {
                 var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Key"]));
                 var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
                 var claims = new[]
                 {
-            new Claim(ClaimTypes.Email,userExist.Email),
-            new Claim("Id",userExist.Id.ToString()),
-            new Claim(ClaimTypes.Role,userExist.Role)
-        };
+                    new Claim(ClaimTypes.Email,userExist.Email),
+                    new Claim("Id",userExist.Id.ToString()),
+                    new Claim(ClaimTypes.Role,userExist.Role)
+                };
                 var token = new JwtSecurityToken(configuration["Jwt:Issuer"], configuration["Jwt:Audience"], claims, expires: DateTime.Now.AddMinutes(30), signingCredentials: credentials);
-                return new JwtSecurityTokenHandler().WriteToken(token);
+                var userid = userExist.Id;
+                var userRole = userExist.Role;
 
+                return new JWTTokenResponse
+                {
+                    Id = userid,
+                    Name = userExist.Name,
+                    Role = userExist.Role,
+                    token = new JwtSecurityTokenHandler().WriteToken(token)
+
+                };
             }
-            return null;
+            return new JWTTokenResponse { token = "1" };
         }
 
         public void UpdateUser(int id, UserDTO userDto)
@@ -83,7 +100,7 @@ namespace TurfBooking.Services
             user.Name = userDto.Name;
             user.Email = userDto.Email;
             user.Phone = userDto.Phone;
-            // Consider updating the password securely
+            
 
             _context.SaveChanges();
         }
@@ -97,9 +114,15 @@ namespace TurfBooking.Services
                 _context.SaveChanges();
             }
         }
-        private bool UserExist(User user)
+        /*private bool UserExist(User user)
         {
-            return _context.Users.Any(t => t.Email == user.Email);
+            var result= _context.Users.Any(t => t.Email == user.Email);
+            return result;
+        }*/
+        public bool UserExist(NewUserDTO user)
+        {
+            var result = _context.Users.Any(t => t.Email == user.Email);
+            return result;
         }
 
         private UserDTO MapToDTO(User user)
@@ -113,14 +136,6 @@ namespace TurfBooking.Services
             };
         }
 
-        private string HashPassword(string password)
-        {
-            using (var sha256 = SHA256.Create())
-            {
-                var bytes = Encoding.UTF8.GetBytes(password);
-                var hash = sha256.ComputeHash(bytes);
-                return Convert.ToBase64String(hash);
-            }
-        }
+      
     }
 }
